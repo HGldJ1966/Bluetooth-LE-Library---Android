@@ -7,12 +7,14 @@ import uk.co.alt236.btlescan.adapters.LeDeviceListAdapter;
 import uk.co.alt236.btlescan.containers.BluetoothLeDeviceStore;
 import uk.co.alt236.btlescan.util.BluetoothLeScanner;
 import uk.co.alt236.easycursor.objectcursor.EasyObjectCursor;
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.SpannableString;
 import android.text.method.LinkMovementMethod;
@@ -120,6 +122,11 @@ public class MainActivity extends ListActivity {
 
         mLeDeviceListAdapter = new LeDeviceListAdapter(this, mDeviceStore.getDeviceCursor());
         setListAdapter(mLeDeviceListAdapter);
+
+        SharedPreferences prefs = getPreferences(Activity.MODE_PRIVATE);
+        if (prefs.getBoolean(getString(R.string.pref_key_auto_start), false)) {
+            startScan();
+        }
     }
 
     @Override
