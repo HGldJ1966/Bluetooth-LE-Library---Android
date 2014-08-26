@@ -6,7 +6,6 @@ import uk.co.alt236.btlescan.R;
 import uk.co.alt236.btlescan.adapters.LeDeviceListAdapter;
 import uk.co.alt236.btlescan.containers.BluetoothLeDeviceStore;
 import uk.co.alt236.btlescan.util.BluetoothLeScanner;
-import uk.co.alt236.btlescan.util.BluetoothUtils;
 import uk.co.alt236.easycursor.objectcursor.EasyObjectCursor;
 import android.app.AlertDialog;
 import android.app.ListActivity;
@@ -41,7 +40,6 @@ public class MainActivity extends ListActivity {
     @InjectView(R.id.tvItemCount)
     TextView mTvItemCount;
 
-    private BluetoothUtils mBluetoothUtils;
     private BluetoothLeScanner mScanner;
     private LeDeviceListAdapter mLeDeviceListAdapter;
     private BluetoothLeDeviceStore mDeviceStore;
@@ -117,9 +115,11 @@ public class MainActivity extends ListActivity {
         ButterKnife.inject(this);
 
         mDeviceStore = new BluetoothLeDeviceStore();
-        mBluetoothUtils = new BluetoothUtils(this);
-        mScanner = new BluetoothLeScanner(mLeScanCallback, mBluetoothUtils);
+        mScanner = BluetoothLeScanner.getInstance(mLeScanCallback, this);
         updateItemCount(0);
+
+        mLeDeviceListAdapter = new LeDeviceListAdapter(this, mDeviceStore.getDeviceCursor());
+        setListAdapter(mLeDeviceListAdapter);
     }
 
     @Override
@@ -128,10 +128,12 @@ public class MainActivity extends ListActivity {
         if (!mScanner.isScanning()) {
             menu.findItem(R.id.menu_stop).setVisible(false);
             menu.findItem(R.id.menu_scan).setVisible(true);
+            menu.findItem(R.id.menu_refresh).setVisible(false);
             menu.findItem(R.id.menu_refresh).setActionView(null);
         } else {
             menu.findItem(R.id.menu_stop).setVisible(true);
             menu.findItem(R.id.menu_scan).setVisible(false);
+            menu.findItem(R.id.menu_refresh).setVisible(true);
             menu.findItem(R.id.menu_refresh).setActionView(
                     R.layout.actionbar_progress_indeterminate);
         }
@@ -166,13 +168,16 @@ public class MainActivity extends ListActivity {
             break;
         case R.id.menu_stop:
             stopScan();
-            invalidateOptionsMenu();
+            break;
+        case R.id.menu_settings:
+            startActivity(new Intent(this, SettingsActivity.class));
             break;
         case R.id.menu_about:
             displayAboutDialog();
             break;
         case R.id.menu_share:
             mDeviceStore.shareDataAsEmail(this);
+            break;
         }
         return true;
     }
@@ -188,8 +193,9 @@ public class MainActivity extends ListActivity {
     @Override
     public void onResume() {
         super.onResume();
-        final boolean mIsBluetoothOn = mBluetoothUtils.isBluetoothOn();
-        final boolean mIsBluetoothLePresent = mBluetoothUtils.isBluetoothLeSupported();
+        final boolean mIsBluetoothOn = mScanner.getBluetoothUtils().isBluetoothOn();
+        final boolean mIsBluetoothLePresent = mScanner.getBluetoothUtils().isBluetoothLeSupported(
+                this);
 
         if (mIsBluetoothOn) {
             mTvBluetoothStatus.setText(R.string.on);
@@ -206,16 +212,17 @@ public class MainActivity extends ListActivity {
         invalidateOptionsMenu();
     }
 
-    private void startScan() {
-        final boolean mIsBluetoothOn = mBluetoothUtils.isBluetoothOn();
-        final boolean mIsBluetoothLePresent = mBluetoothUtils.isBluetoothLeSupported();
+    private void clearScan() {
         mDeviceStore.clear();
         updateItemCount(0);
+    }
 
-        mLeDeviceListAdapter = new LeDeviceListAdapter(this, mDeviceStore.getDeviceCursor());
-        setListAdapter(mLeDeviceListAdapter);
+    private void startScan() {
+        final boolean mIsBluetoothOn = mScanner.getBluetoothUtils().isBluetoothOn();
+        final boolean mIsBluetoothLePresent = mScanner.getBluetoothUtils().isBluetoothLeSupported(
+                this);
 
-        mBluetoothUtils.askUserToEnableBluetoothIfNeeded();
+        mScanner.getBluetoothUtils().askUserToEnableBluetoothIfNeeded(this);
         if (mIsBluetoothOn && mIsBluetoothLePresent) {
             mScanner.scanLeDevice(-1, true);
             invalidateOptionsMenu();
@@ -224,6 +231,7 @@ public class MainActivity extends ListActivity {
 
     private void stopScan() {
         mScanner.scanLeDevice(-1, false);
+        invalidateOptionsMenu();
     }
 
 }

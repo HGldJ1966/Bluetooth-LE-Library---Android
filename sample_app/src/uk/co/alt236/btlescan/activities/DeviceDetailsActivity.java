@@ -153,6 +153,8 @@ public class DeviceDetailsActivity extends Activity {
         setContentView(R.layout.activity_details);
         ButterKnife.inject(this);
 
+        getActionBar().setDisplayHomeAsUpEnabled(true);
+
         mList = (ListView) findViewById(R.id.lv_list);
 
         mDevice = getIntent().getParcelableExtra(EXTRA_DEVICE);
@@ -170,15 +172,15 @@ public class DeviceDetailsActivity extends Activity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
         case R.id.menu_connect:
-
             final Intent intent = new Intent(this, DeviceControlActivity.class);
             intent.putExtra(DeviceControlActivity.EXTRA_DEVICE, mDevice);
-
             startActivity(intent);
-
-            break;
+            return true;
+        case android.R.id.home:
+            onBackPressed();
+            return true;
         }
-        return true;
+        return super.onOptionsItemSelected(item);
     }
 
     private void pupulateDetails(BluetoothLeDevice device) {
