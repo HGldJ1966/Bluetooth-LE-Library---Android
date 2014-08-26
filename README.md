@@ -97,6 +97,10 @@ An IBeaconDevice extends BluetoothLeDevice, so you still have access to the same
 * `getMinor()`: Gets the device's Minor value
 
 
+### Fun with Gimbals
+Although this app doesn't provide support for fetching Gimbal configurations from the Gimbal SDK, or writing to Gimbals directly, it does show individual beacons as unique entries, despite that their MAC address is randomized twice per second.
+
+
 ### Lookup Functions
 You can also lookup values and convert them to human friendly strings:
 * `BluetoothClassResolver.resolveDeviceClass(int btClass)`: Will try to resolve a Blueotooth Device class
@@ -112,6 +116,8 @@ You can also lookup values and convert them to human friendly strings:
     * Attempting to create an iBeaconDevice from a device which is not an iBeacon will now throw an IllegalArgumentException exception.
     * Fixed a ConcurrentModificationException on getRunningAverageRssi()
     * Added some Estimote UUIDs
+* v0.0.3:
+    * Added Gimbal support
 
 ## Sample Application Changelog
 * v0.0.1 
@@ -120,6 +126,9 @@ You can also lookup values and convert them to human friendly strings:
     * Can now export scanned devices as a CSV file. 
 * v0.0.3: 
     * UI Refresh.
+* v0.0.4:
+    * Added Gimbal support
+    * Added a pretty proximity bar
     
 ## Permission Explanation
 You will need the following permissions to access the Bluetooth Hardware
