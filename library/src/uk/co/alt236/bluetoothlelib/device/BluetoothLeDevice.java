@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 
 import uk.co.alt236.bluetoothlelib.device.adrecord.AdRecordStore;
 import uk.co.alt236.bluetoothlelib.resolvers.BluetoothClassResolver;
@@ -20,376 +21,434 @@ import android.os.Parcelable;
  * This is a wrapper around the default BluetoothDevice object
  * As BluetoothDevice is final it cannot be extended, so to get it you
  * need to call {@link #getDevice()} method.
- *
+ * 
  * @author Alexandros Schillings
  */
-public class BluetoothLeDevice implements Parcelable{
-	private static final String PARCEL_EXTRA_BLUETOOTH_DEVICE = "bluetooth_device";
-	private static final String PARCEL_EXTRA_CURRENT_RSSI = "current_rssi";
-	private static final String PARCEL_EXTRA_CURRENT_TIMESTAMP = "current_timestamp";
-	private static final String PARCEL_EXTRA_DEVICE_RSSI_LOG = "device_rssi_log";
-	private static final String PARCEL_EXTRA_DEVICE_SCANRECORD = "device_scanrecord";
-	private static final String PARCEL_EXTRA_DEVICE_SCANRECORD_STORE = "device_scanrecord_store";
-	private static final String PARCEL_EXTRA_FIRST_RSSI = "device_first_rssi";
-	private static final String PARCEL_EXTRA_FIRST_TIMESTAMP = "first_timestamp";
-	private static final long LOG_INVALIDATION_THRESHOLD = 10 * 1000;
-	protected static final int MAX_RSSI_LOG_SIZE = 10;
+public class BluetoothLeDevice implements Parcelable {
 
-	private final AdRecordStore mRecordStore;
-	private final BluetoothDevice mDevice;
-	private final Map<Long, Integer> mRssiLog;
-	private final byte[] mScanRecord;
-	private final int mFirstRssi;
-	private final long mFirstTimestamp;
+    private static final String PARCEL_EXTRA_BLUETOOTH_DEVICE = "bluetooth_device";
+    private static final String PARCEL_EXTRA_CURRENT_RSSI = "current_rssi";
+    private static final String PARCEL_EXTRA_CURRENT_TIMESTAMP = "current_timestamp";
+    private static final String PARCEL_EXTRA_DEVICE_RSSI_LOG = "device_rssi_log";
+    private static final String PARCEL_EXTRA_DEVICE_SCANRECORD = "device_scanrecord";
+    private static final String PARCEL_EXTRA_DEVICE_SCANRECORD_STORE = "device_scanrecord_store";
+    private static final String PARCEL_EXTRA_FIRST_RSSI = "device_first_rssi";
+    private static final String PARCEL_EXTRA_FIRST_TIMESTAMP = "first_timestamp";
 
-	private int mCurrentRssi;
-	private long mCurrentTimestamp;
+    private static final long INVALIDATION_THRESHOLD = 10 * 1000;
+    protected static final int MAX_RSSI_LOG_SIZE = 10;
 
-	/** The Constant CREATOR. */
-	public static final Parcelable.Creator<BluetoothLeDevice> CREATOR = new Parcelable.Creator<BluetoothLeDevice>() {
-		public BluetoothLeDevice createFromParcel(Parcel in) {
-			return new BluetoothLeDevice(in);
-		}
+    public static final int MAX_RSSI = -50;
+    public static final int MIN_RSSI = -100;
+    public static final int GONE_RSSI = -120;
 
-		public BluetoothLeDevice[] newArray(int size) {
-			return new BluetoothLeDevice[size];
-		}
-	};
+    protected final AdRecordStore mRecordStore;
+    protected final BluetoothDevice mDevice;
+    protected final Map<Long, Integer> mRssiLog;
+    protected final byte[] mScanRecord;
+    protected final int mFirstRssi;
+    protected final long mFirstTimestamp;
 
-	/**
-	 * Instantiates a new Bluetooth LE device.
-	 *
-	 * @param device a standard android Bluetooth device
-	 * @param rssi the RSSI value of the Bluetooth device
-	 * @param scanRecord the scan record of the device
-	 * @param timestamp the timestamp of the RSSI reading
-	 */
-	public BluetoothLeDevice(BluetoothDevice device, int rssi, byte[] scanRecord, long timestamp){
-		mDevice = device;
-		mFirstRssi = rssi;
-		mFirstTimestamp = timestamp;
-		mRecordStore = new AdRecordStore(AdRecordUtils.parseScanRecordAsSparseArray(scanRecord));
-		mScanRecord = scanRecord;
-		mRssiLog = new LimitedLinkHashMap<Long, Integer>(MAX_RSSI_LOG_SIZE);
-		updateRssiReading(timestamp, rssi);
-	}
+    protected int mCurrentRssi;
+    protected long mCurrentTimestamp;
 
-	/**
-	 * Instantiates a new Bluetooth LE device.
-	 *
-	 * @param device the device
-	 */
-	public BluetoothLeDevice(BluetoothLeDevice device) {
-		mCurrentRssi = device.getRssi();
-		mCurrentTimestamp = device.getTimestamp();
-		mDevice = device.getDevice();
-		mFirstRssi = device.getFirstRssi();
-		mFirstTimestamp = device.getFirstTimestamp();
-		mRecordStore = new AdRecordStore(
-				AdRecordUtils.parseScanRecordAsSparseArray(device.getScanRecord()));
-		mRssiLog = device.getRssiLog();
-		mScanRecord = device.getScanRecord();
-	}
+    /** The Constant CREATOR. */
+    public static final Parcelable.Creator<BluetoothLeDevice> CREATOR = new Parcelable.Creator<BluetoothLeDevice>() {
 
-	/**
-	 * Instantiates a new bluetooth le device.
-	 *
-	 * @param in the in
-	 */
-	@SuppressWarnings("unchecked")
-	protected BluetoothLeDevice(Parcel in) {
-		final Bundle b = in.readBundle(getClass().getClassLoader());
+        @Override
+        public BluetoothLeDevice createFromParcel(Parcel in) {
+            return new BluetoothLeDevice(in);
+        }
 
-		mCurrentRssi = b.getInt(PARCEL_EXTRA_CURRENT_RSSI, 0);
-		mCurrentTimestamp = b.getLong(PARCEL_EXTRA_CURRENT_TIMESTAMP, 0);
-		mDevice = b.getParcelable(PARCEL_EXTRA_BLUETOOTH_DEVICE);
-		mFirstRssi = b.getInt(PARCEL_EXTRA_FIRST_RSSI, 0);
-		mFirstTimestamp = b.getLong(PARCEL_EXTRA_FIRST_TIMESTAMP, 0);
-		mRecordStore = b.getParcelable(PARCEL_EXTRA_DEVICE_SCANRECORD_STORE);
-		mRssiLog = (Map<Long, Integer>) b.getSerializable(PARCEL_EXTRA_DEVICE_RSSI_LOG);
-		mScanRecord = b.getByteArray(PARCEL_EXTRA_DEVICE_SCANRECORD);
-	}
+        @Override
+        public BluetoothLeDevice[] newArray(int size) {
+            return new BluetoothLeDevice[size];
+        }
+    };
 
-	/**
-	 * Adds the to rssi log.
-	 *
-	 * @param timestamp the timestamp
-	 * @param rssiReading the rssi reading
-	 */
-	private void addToRssiLog(long timestamp, int rssiReading){
-		synchronized (mRssiLog) {
-			if(timestamp - mCurrentTimestamp > LOG_INVALIDATION_THRESHOLD){
-				mRssiLog.clear();
-			}
+    /**
+     * Instantiates a new Bluetooth LE device.
+     * 
+     * @param device
+     *            a standard android Bluetooth device
+     * @param rssi
+     *            the RSSI value of the Bluetooth device
+     * @param scanRecord
+     *            the scan record of the device
+     * @param timestamp
+     *            the timestamp of the RSSI reading
+     */
+    public BluetoothLeDevice(BluetoothDevice device, int rssi, byte[] scanRecord, long timestamp) {
+        mDevice = device;
+        mFirstRssi = rssi;
+        mFirstTimestamp = timestamp;
+        mRecordStore = new AdRecordStore(AdRecordUtils.parseScanRecordAsSparseArray(scanRecord));
+        mScanRecord = scanRecord;
+        mRssiLog = new LimitedLinkHashMap<Long, Integer>(MAX_RSSI_LOG_SIZE);
+        updateRssiReading(timestamp, rssi);
+    }
 
-			mCurrentRssi = rssiReading;
-			mCurrentTimestamp = timestamp;
-			mRssiLog.put(timestamp, rssiReading);
-		}
-	}
+    /**
+     * Instantiates a new Bluetooth LE device.
+     * 
+     * @param device
+     *            the device
+     */
+    public BluetoothLeDevice(BluetoothLeDevice device) {
+        mCurrentRssi = device.getRssi();
+        mCurrentTimestamp = device.getTimestamp();
+        mDevice = device.getDevice();
+        mFirstRssi = device.getFirstRssi();
+        mFirstTimestamp = device.getFirstTimestamp();
+        mRecordStore = new AdRecordStore(
+                AdRecordUtils.parseScanRecordAsSparseArray(device.getScanRecord()));
+        mRssiLog = device.getRssiLog();
+        mScanRecord = device.getScanRecord();
+    }
 
-	/* (non-Javadoc)
-	 * @see android.os.Parcelable#describeContents()
-	 */
-	@Override
-	public int describeContents() {
-		return 0;
-	}
+    /**
+     * Instantiates a new bluetooth le device.
+     * 
+     * @param in
+     *            the in
+     */
+    @SuppressWarnings("unchecked")
+    protected BluetoothLeDevice(Parcel in) {
+        final Bundle b = in.readBundle(getClass().getClassLoader());
 
-	/* (non-Javadoc)
-	 * @see java.lang.Object#equals(java.lang.Object)
-	 */
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		BluetoothLeDevice other = (BluetoothLeDevice) obj;
-		if (mCurrentRssi != other.mCurrentRssi)
-			return false;
-		if (mCurrentTimestamp != other.mCurrentTimestamp)
-			return false;
-		if (mDevice == null) {
-			if (other.mDevice != null)
-				return false;
-		} else if (!mDevice.equals(other.mDevice))
-			return false;
-		if (mFirstRssi != other.mFirstRssi)
-			return false;
-		if (mFirstTimestamp != other.mFirstTimestamp)
-			return false;
-		if (mRecordStore == null) {
-			if (other.mRecordStore != null)
-				return false;
-		} else if (!mRecordStore.equals(other.mRecordStore))
-			return false;
-		if (mRssiLog == null) {
-			if (other.mRssiLog != null)
-				return false;
-		} else if (!mRssiLog.equals(other.mRssiLog))
-			return false;
-		if (!Arrays.equals(mScanRecord, other.mScanRecord))
-			return false;
-		return true;
-	}
+        mCurrentRssi = b.getInt(PARCEL_EXTRA_CURRENT_RSSI, 0);
+        mCurrentTimestamp = b.getLong(PARCEL_EXTRA_CURRENT_TIMESTAMP, 0);
+        mDevice = b.getParcelable(PARCEL_EXTRA_BLUETOOTH_DEVICE);
+        mFirstRssi = b.getInt(PARCEL_EXTRA_FIRST_RSSI, 0);
+        mFirstTimestamp = b.getLong(PARCEL_EXTRA_FIRST_TIMESTAMP, 0);
+        mRecordStore = b.getParcelable(PARCEL_EXTRA_DEVICE_SCANRECORD_STORE);
+        mRssiLog = (Map<Long, Integer>) b.getSerializable(PARCEL_EXTRA_DEVICE_RSSI_LOG);
+        mScanRecord = b.getByteArray(PARCEL_EXTRA_DEVICE_SCANRECORD);
+    }
 
-	/**
-	 * Gets the address.
-	 *
-	 * @return the address
-	 */
-	public String getAddress(){
-		return mDevice.getAddress();
-	}
+    /**
+     * Adds the to rssi log.
+     * 
+     * @param timestamp
+     *            the timestamp
+     * @param rssiReading
+     *            the rssi reading
+     */
+    private void addToRssiLog(long timestamp, int rssiReading) {
+        synchronized (mRssiLog) {
+            Set<Long> keySet = mRssiLog.keySet();
+            for (long key : keySet.toArray(new Long[keySet.size()])) {
+                if (key < System.currentTimeMillis() - INVALIDATION_THRESHOLD) {
+                    mRssiLog.remove(key);
+                }
+            }
 
-	/**
-	 * Gets the ad record store.
-	 *
-	 * @return the ad record store
-	 */
-	public AdRecordStore getAdRecordStore(){
-		return mRecordStore;
-	}
+            mCurrentRssi = rssiReading;
+            mCurrentTimestamp = timestamp;
+            mRssiLog.put(timestamp, rssiReading);
+        }
+    }
 
-	/**
-	 * Gets the bluetooth device bond state.
-	 *
-	 * @return the bluetooth device bond state
-	 */
-	public String getBluetoothDeviceBondState(){
-		return resolveBondingState(mDevice.getBondState());
-	}
+    /* (non-Javadoc)
+     * @see android.os.Parcelable#describeContents()
+     */
+    @Override
+    public int describeContents() {
+        return 0;
+    }
 
-	/**
-	 * Gets the bluetooth device class name.
-	 *
-	 * @return the bluetooth device class name
-	 */
-	public String getBluetoothDeviceClassName(){
-		return BluetoothClassResolver.resolveDeviceClass(mDevice.getBluetoothClass().getDeviceClass());
-	}
+    /* (non-Javadoc)
+     * @see java.lang.Object#equals(java.lang.Object)
+     */
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        BluetoothLeDevice other = (BluetoothLeDevice) obj;
+        if (mCurrentRssi != other.mCurrentRssi) {
+            return false;
+        }
+        if (mCurrentTimestamp != other.mCurrentTimestamp) {
+            return false;
+        }
+        if (mDevice == null) {
+            if (other.mDevice != null) {
+                return false;
+            }
+        } else if (!mDevice.equals(other.mDevice)) {
+            return false;
+        }
+        if (mFirstRssi != other.mFirstRssi) {
+            return false;
+        }
+        if (mFirstTimestamp != other.mFirstTimestamp) {
+            return false;
+        }
+        if (mRecordStore == null) {
+            if (other.mRecordStore != null) {
+                return false;
+            }
+        } else if (!mRecordStore.equals(other.mRecordStore)) {
+            return false;
+        }
+        if (mRssiLog == null) {
+            if (other.mRssiLog != null) {
+                return false;
+            }
+        } else if (!mRssiLog.equals(other.mRssiLog)) {
+            return false;
+        }
+        if (!Arrays.equals(mScanRecord, other.mScanRecord)) {
+            return false;
+        }
+        return true;
+    }
 
-	/**
-	 * Gets the device.
-	 *
-	 * @return the device
-	 */
-	public BluetoothDevice getDevice() {
-		return mDevice;
-	}
+    /**
+     * Gets the unique identity.
+     * 
+     * @return the unique identity
+     */
+    public String getId() {
+        return getAddress();
+    }
 
-	/**
-	 * Gets the first rssi.
-	 *
-	 * @return the first rssi
-	 */
-	public int getFirstRssi(){
-		return mFirstRssi;
-	}
+    /**
+     * Gets the address.
+     * 
+     * @return the address
+     */
+    public String getAddress() {
+        return mDevice.getAddress();
+    }
 
-	/**
-	 * Gets the first timestamp.
-	 *
-	 * @return the first timestamp
-	 */
-	public long getFirstTimestamp(){
-		return mFirstTimestamp;
-	}
+    /**
+     * Gets the ad record store.
+     * 
+     * @return the ad record store
+     */
+    public AdRecordStore getAdRecordStore() {
+        return mRecordStore;
+    }
 
-	/**
-	 * Gets the name.
-	 *
-	 * @return the name
-	 */
-	public String getName(){
-		return mDevice.getName();
-	}
+    /**
+     * Gets the bluetooth device bond state.
+     * 
+     * @return the bluetooth device bond state
+     */
+    public String getBluetoothDeviceBondState() {
+        return resolveBondingState(mDevice.getBondState());
+    }
 
-	/**
-	 * Gets the rssi.
-	 *
-	 * @return the rssi
-	 */
-	public int getRssi() {
-		return mCurrentRssi;
-	}
+    /**
+     * Gets the bluetooth device class name.
+     * 
+     * @return the bluetooth device class name
+     */
+    public String getBluetoothDeviceClassName() {
+        return BluetoothClassResolver.resolveDeviceClass(mDevice.getBluetoothClass()
+                .getDeviceClass());
+    }
 
-	/**
-	 * Gets the rssi log.
-	 *
-	 * @return the rssi log
-	 */
-	protected Map<Long, Integer> getRssiLog() {
-		synchronized (mRssiLog) {
-			return mRssiLog;
-		}
-	}
+    /**
+     * Gets the device.
+     * 
+     * @return the device
+     */
+    public BluetoothDevice getDevice() {
+        return mDevice;
+    }
 
-	/**
-	 * Gets the running average rssi.
-	 *
-	 * @return the running average rssi
-	 */
-	public double getRunningAverageRssi(){
-		int sum = 0;
-		int count = 0;
+    /**
+     * Gets the first rssi.
+     * 
+     * @return the first rssi
+     */
+    public int getFirstRssi() {
+        return mFirstRssi;
+    }
 
-		synchronized (mRssiLog) {
-			final Iterator<Long> it1 = mRssiLog.keySet().iterator();
+    /**
+     * Gets the first timestamp.
+     * 
+     * @return the first timestamp
+     */
+    public long getFirstTimestamp() {
+        return mFirstTimestamp;
+    }
 
-			while(it1.hasNext()){
-				count ++;
-				sum += mRssiLog.get(it1.next());
-			}
-		}
-		//		for(final Map.Entry<Long,Integer> e : mRssiLog.entrySet()){
-		//        	count ++;
-		//        	sum += e.getValue();
-		//	    }
+    /**
+     * Gets the name.
+     * 
+     * @return the name
+     */
+    public String getName() {
+        return mDevice.getName();
+    }
 
-		if(count > 0){
-			return sum/count;
-		} else {
-			return 0;
-		}
+    /**
+     * Gets the rssi.
+     * 
+     * @return the rssi
+     */
+    public int getRssi() {
+        return mCurrentRssi;
+    }
 
-	}
+    /**
+     * Gets the rssi log.
+     * 
+     * @return the rssi log
+     */
+    protected Map<Long, Integer> getRssiLog() {
+        synchronized (mRssiLog) {
+            return mRssiLog;
+        }
+    }
 
-	/**
-	 * Gets the scan record.
-	 *
-	 * @return the scan record
-	 */
-	public byte[] getScanRecord() {
-		return mScanRecord;
-	}
+    /**
+     * Gets the running average rssi.
+     * 
+     * @return the running average rssi
+     */
+    public double getRunningAverageRssi() {
+        int sum = 0, count = 0;
+        long lastKey = 0;
+        int lastValue = 120;
 
-	/**
-	 * Gets the timestamp.
-	 *
-	 * @return the timestamp
-	 */
-	public long getTimestamp(){
-		return mCurrentTimestamp;
-	}
+        synchronized (mRssiLog) {
+            final Iterator<Long> it1 = mRssiLog.keySet().iterator();
 
-	/* (non-Javadoc)
-	 * @see java.lang.Object#hashCode()
-	 */
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + mCurrentRssi;
-		result = prime * result + (int) (mCurrentTimestamp ^ (mCurrentTimestamp >>> 32));
-		result = prime * result + ((mDevice == null) ? 0 : mDevice.hashCode());
-		result = prime * result + mFirstRssi;
-		result = prime * result + (int) (mFirstTimestamp ^ (mFirstTimestamp >>> 32));
-		result = prime * result + ((mRecordStore == null) ? 0 : mRecordStore.hashCode());
-		result = prime * result + ((mRssiLog == null) ? 0 : mRssiLog.hashCode());
-		result = prime * result + Arrays.hashCode(mScanRecord);
-		return result;
-	}
+            while (it1.hasNext()) {
+                lastKey = it1.next();
+                lastValue = mRssiLog.get(lastKey);
+                if (lastKey >= System.currentTimeMillis() - INVALIDATION_THRESHOLD) {
+                    count++;
+                    sum += lastValue;
+                }
+            }
+        }
 
-	/* (non-Javadoc)
-	 * @see java.lang.Object#toString()
-	 */
-	@Override
-	public String toString() {
-		return "BluetoothLeDevice [mDevice=" + mDevice + ", mRssi=" + mFirstRssi + ", mScanRecord=" + ByteUtils.byteArrayToHexString(mScanRecord) + ", mRecordStore=" + mRecordStore + ", getBluetoothDeviceBondState()=" + getBluetoothDeviceBondState() + ", getBluetoothDeviceClassName()=" + getBluetoothDeviceClassName() + "]";
-	}
+        if (count > 0) {
+            return sum / count;
+        } else if (count == 1) {
+            // Fade out the last signal
+            return (lastValue - GONE_RSSI)
+                    * ((double) (INVALIDATION_THRESHOLD - (System.currentTimeMillis() - lastKey))
+                    / (double) INVALIDATION_THRESHOLD) + GONE_RSSI;
+        } else {
+            return GONE_RSSI;
+        }
 
-	/**
-	 * Update rssi reading.
-	 *
-	 * @param timestamp the timestamp
-	 * @param rssiReading the rssi reading
-	 */
-	public void updateRssiReading(long timestamp, int rssiReading){
-		addToRssiLog(timestamp, rssiReading);
-	}
+    }
 
-	/* (non-Javadoc)
-	 * @see android.os.Parcelable#writeToParcel(android.os.Parcel, int)
-	 */
-	@Override
-	public void writeToParcel(Parcel parcel, int arg1) {
-		final Bundle b = new Bundle(getClass().getClassLoader());
+    /**
+     * Gets the scan record.
+     * 
+     * @return the scan record
+     */
+    public byte[] getScanRecord() {
+        return mScanRecord;
+    }
 
-		b.putByteArray(PARCEL_EXTRA_DEVICE_SCANRECORD, mScanRecord);
+    /**
+     * Gets the timestamp.
+     * 
+     * @return the timestamp
+     */
+    public long getTimestamp() {
+        return mCurrentTimestamp;
+    }
 
-		b.putInt(PARCEL_EXTRA_FIRST_RSSI, mFirstRssi);
-		b.putInt(PARCEL_EXTRA_CURRENT_RSSI, mCurrentRssi);
+    /* (non-Javadoc)
+     * @see java.lang.Object#hashCode()
+     */
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + mCurrentRssi;
+        result = prime * result + (int) (mCurrentTimestamp ^ mCurrentTimestamp >>> 32);
+        result = prime * result + (mDevice == null ? 0 : mDevice.hashCode());
+        result = prime * result + mFirstRssi;
+        result = prime * result + (int) (mFirstTimestamp ^ mFirstTimestamp >>> 32);
+        result = prime * result + (mRecordStore == null ? 0 : mRecordStore.hashCode());
+        result = prime * result + (mRssiLog == null ? 0 : mRssiLog.hashCode());
+        result = prime * result + Arrays.hashCode(mScanRecord);
+        return result;
+    }
 
-		b.putLong(PARCEL_EXTRA_FIRST_TIMESTAMP, mFirstTimestamp);
-		b.putLong(PARCEL_EXTRA_CURRENT_TIMESTAMP, mCurrentTimestamp);
+    /* (non-Javadoc)
+     * @see java.lang.Object#toString()
+     */
+    @Override
+    public String toString() {
+        return "BluetoothLeDevice [mDevice=" + mDevice
+                + ", mRssi=" + mFirstRssi
+                + ", mScanRecord=" + ByteUtils.byteArrayToHexString(mScanRecord, true)
+                + ", mRecordStore=" + mRecordStore
+                + ", getBluetoothDeviceBondState()=" + getBluetoothDeviceBondState()
+                + ", getBluetoothDeviceClassName()=" + getBluetoothDeviceClassName() + "]";
+    }
 
-		b.putParcelable(PARCEL_EXTRA_BLUETOOTH_DEVICE, mDevice);
-		b.putParcelable(PARCEL_EXTRA_DEVICE_SCANRECORD_STORE, mRecordStore);
-		b.putSerializable(PARCEL_EXTRA_DEVICE_RSSI_LOG, (Serializable) mRssiLog);
+    /**
+     * Update rssi reading.
+     * 
+     * @param timestamp
+     *            the timestamp
+     * @param rssiReading
+     *            the rssi reading
+     */
+    public void updateRssiReading(long timestamp, int rssiReading) {
+        addToRssiLog(timestamp, rssiReading);
+    }
 
-		parcel.writeBundle(b);
-	}
+    /* (non-Javadoc)
+     * @see android.os.Parcelable#writeToParcel(android.os.Parcel, int)
+     */
+    @Override
+    public void writeToParcel(Parcel parcel, int arg1) {
+        final Bundle b = new Bundle(getClass().getClassLoader());
 
-	/**
-	 * Resolve bonding state.
-	 *
-	 * @param bondState the bond state
-	 * @return the string
-	 */
-	private static String resolveBondingState(int bondState){
-		switch (bondState){
-		case BluetoothDevice.BOND_BONDED:
-			return "Paired";
-		case BluetoothDevice.BOND_BONDING:
-			return "Pairing";
-		case BluetoothDevice.BOND_NONE:
-			return "Unbonded";
-		default:
-			return "Unknown";
-		}
-	}
+        b.putByteArray(PARCEL_EXTRA_DEVICE_SCANRECORD, mScanRecord);
+
+        b.putInt(PARCEL_EXTRA_FIRST_RSSI, mFirstRssi);
+        b.putInt(PARCEL_EXTRA_CURRENT_RSSI, mCurrentRssi);
+
+        b.putLong(PARCEL_EXTRA_FIRST_TIMESTAMP, mFirstTimestamp);
+        b.putLong(PARCEL_EXTRA_CURRENT_TIMESTAMP, mCurrentTimestamp);
+
+        b.putParcelable(PARCEL_EXTRA_BLUETOOTH_DEVICE, mDevice);
+        b.putParcelable(PARCEL_EXTRA_DEVICE_SCANRECORD_STORE, mRecordStore);
+        b.putSerializable(PARCEL_EXTRA_DEVICE_RSSI_LOG, (Serializable) mRssiLog);
+
+        parcel.writeBundle(b);
+    }
+
+    /**
+     * Resolve bonding state.
+     * 
+     * @param bondState
+     *            the bond state
+     * @return the string
+     */
+    private static String resolveBondingState(int bondState) {
+        switch (bondState) {
+        case BluetoothDevice.BOND_BONDED:
+            return "Paired";
+        case BluetoothDevice.BOND_BONDING:
+            return "Pairing";
+        case BluetoothDevice.BOND_NONE:
+            return "Unbonded";
+        default:
+            return "Unknown";
+        }
+    }
 }

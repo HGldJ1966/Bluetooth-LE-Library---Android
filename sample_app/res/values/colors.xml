@@ -1,3 +1,9 @@
 <resources>
-	<color name="light_gray">#66e0e0e0</color>
+
+    <color name="light_gray">#66e0e0e0</color>
+    <color name="medium_gray">#40808080</color>
+    <color name="signal_low">#ffEC0909</color>
+    <color name="signal_med">#ffE0DA09</color>
+    <color name="signal_high">#ff09DD09</color>
+
 </resources>

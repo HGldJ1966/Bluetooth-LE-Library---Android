@@ -126,7 +126,7 @@ public class DeviceControlActivity extends Activity {
 
 				mGattUUID.setText(tryString(uuid, noData));
 				mGattUUIDDesc.setText(GattAttributeResolver.getAttributeName(uuid, getString(R.string.unknown)));
-				mDataAsArray.setText(ByteUtils.byteArrayToHexString(dataArr));
+                mDataAsArray.setText(ByteUtils.byteArrayToHexString(dataArr, true));
 				mDataAsString.setText(new String(dataArr));
 			}
 		}
@@ -222,7 +222,9 @@ public class DeviceControlActivity extends Activity {
 	// In this sample, we populate the data structure that is bound to the ExpandableListView
 	// on the UI.
 	private void displayGattServices(List<BluetoothGattService> gattServices) {
-		if (gattServices == null) return;
+		if (gattServices == null) {
+            return;
+        }
 		generateExportString(gattServices);
 
 		String uuid = null;
