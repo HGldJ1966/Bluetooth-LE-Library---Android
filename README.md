@@ -97,6 +97,10 @@ An IBeaconDevice extends BluetoothLeDevice, so you still have access to the same
 * `getMinor()`: Gets the device's Minor value
 
 
+### Fun with Gimbals
+Although this app doesn't provide support for fetching Gimbal configurations from the Gimbal SDK, or writing to Gimbals directly, it does show individual beacons as unique entries, despite that their MAC address is randomized twice per second.
+
+
 ### Lookup Functions
 You can also lookup values and convert them to human friendly strings:
 * `BluetoothClassResolver.resolveDeviceClass(int btClass)`: Will try to resolve a Blueotooth Device class
