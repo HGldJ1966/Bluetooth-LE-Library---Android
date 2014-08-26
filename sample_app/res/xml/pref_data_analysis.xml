@@ -1,0 +1,12 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <ListPreference
+        android:defaultValue="180"
+        android:entries="@array/pref_titles_rssi_running_average"
+        android:entryValues="@array/pref_values_rssi_running_average"
+        android:key="@string/pref_key_rssi_running_average"
+        android:negativeButtonText="@null"
+        android:positiveButtonText="@null"
+        android:title="@string/pref_title_rssi_running_average" />
+    
+</PreferenceScreen>

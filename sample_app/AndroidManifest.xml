@@ -21,8 +21,9 @@
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
         <activity
-            android:name="uk.co.alt236.btlescan.activities.MainActivity"
-            android:label="@string/app_name" >
+            android:name=".activities.MainActivity"
+            android:label="@string/app_name"
+            android:launchMode="singleTask" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -30,13 +31,21 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="uk.co.alt236.btlescan.activities.DeviceDetailsActivity"
+            android:name=".activities.DeviceDetailsActivity"
             android:label="@string/app_name" >
         </activity>
-        <activity android:name="uk.co.alt236.btlescan.activities.DeviceControlActivity" />
+        <activity android:name=".activities.DeviceControlActivity" />
+        <activity
+            android:name=".activities.SettingsActivity"
+            android:label="@string/title_activity_settings"
+            android:parentActivityName=".activities.MainActivity" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="uk.co.alt236.btlescan.activities.MainActivity" />
+        </activity>
 
         <service
-            android:name="uk.co.alt236.btlescan.services.BluetoothLeService"
+            android:name=".services.BluetoothLeService"
             android:enabled="true" />
     </application>
 

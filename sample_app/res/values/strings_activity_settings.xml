@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="title_activity_settings">Settings</string>
+
+    <string name="pref_header_general">General</string>
+
+    <string name="pref_key_auto_start">auto_start</string>
+    <string name="pref_title_auto_start">Scan when opened</string>
+    <string name="pref_description_auto_start">Scanning is started as soon as the application is opened</string>
+    
+    <string name="pref_key_in_background">in_background</string>
+    <string name="pref_title_in_background">Scan in background</string>
+    <string name="pref_description_in_background">Continue scanning in background, even if the application is closed</string>
+
+    <string name="pref_header_data_analysis">Data analysis</string>
+    
+    <string name="pref_key_rssi_running_average">rssi_running_average</string>
+    <string name="pref_title_rssi_running_average">RSSI running average</string>
+
+    <string-array name="pref_titles_rssi_running_average">
+        <item>1 second</item>
+        <item>2 seconds</item>
+        <item>3 seconds</item>
+        <item>4 seconds</item>
+        <item>5 seconds</item>
+        <item>6 seconds</item>
+        <item>7 seconds</item>
+        <item>8 seconds</item>
+        <item>9 seconds</item>
+        <item>10 seconds</item>
+        <item>15 seconds</item>
+        <item>20 seconds</item>
+        <item>30 seconds</item>
+        <item>45 seconds</item>
+        <item>60 seconds</item>
+    </string-array>
+    <string-array name="pref_values_rssi_running_average">
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+        <item>5</item>
+        <item>6</item>
+        <item>7</item>
+        <item>8</item>
+        <item>9</item>
+        <item>10</item>
+        <item>15</item>
+        <item>20</item>
+        <item>30</item>
+        <item>45</item>
+        <item>60</item>
+    </string-array>
+
+    <!-- Example settings for Notifications -->
+    <string name="pref_header_notifications">Notifications</string>
+    <string name="pref_title_new_message_notifications">New message notifications</string>
+    <string name="pref_title_ringtone">Ringtone</string>
+    <string name="pref_ringtone_silent">Silent</string>
+    <string name="pref_title_vibrate">Vibrate</string>
+    
+</resources>
