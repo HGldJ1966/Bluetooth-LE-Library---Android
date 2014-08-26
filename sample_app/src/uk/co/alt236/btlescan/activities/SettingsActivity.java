@@ -42,6 +42,7 @@ public class SettingsActivity extends PreferenceActivity {
      * shown on tablets.
      */
     private static final boolean ALWAYS_SIMPLE_PREFS = false;
+    private static final boolean ALWAYS_MULTIPANE_PREFS = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -91,6 +92,7 @@ public class SettingsActivity extends PreferenceActivity {
      * device configuration dictates that a simplified, single-pane UI should be
      * shown.
      */
+    @SuppressWarnings("deprecation")
     private void setupSimplePreferencesScreen() {
         if (!isSimplePreferences(this)) {
             return;
@@ -99,25 +101,23 @@ public class SettingsActivity extends PreferenceActivity {
         // In the simplified UI, fragments are not used at all and we instead
         // use the older PreferenceActivity APIs.
 
-        // Add 'general' preferences, and a corresponding header.
+        addPreferencesFromResource(R.xml.pref_general);
+
+        /*
+        // Add 'general' preferences
         PreferenceCategory fakeHeader = new PreferenceCategory(this);
         fakeHeader.setTitle(R.string.pref_header_general);
         getPreferenceScreen().addPreference(fakeHeader);
-        addPreferencesFromResource(R.xml.pref_general);
+        */
 
         // Add 'data and sync' preferences, and a corresponding header.
-        fakeHeader = new PreferenceCategory(this);
+        PreferenceCategory fakeHeader = new PreferenceCategory(this);
         fakeHeader.setTitle(R.string.pref_header_data_analysis);
         getPreferenceScreen().addPreference(fakeHeader);
         addPreferencesFromResource(R.xml.pref_data_analysis);
 
-        // Bind the summaries of EditText/List/Dialog/Ringtone preferences to
-        // their values. When their values change, their summaries are updated
-        // to reflect the new value, per the Android Design guidelines.
-        bindPreferenceSummaryToValue(findPreference("example_text"));
-        bindPreferenceSummaryToValue(findPreference("example_list"));
-        bindPreferenceSummaryToValue(findPreference("notifications_new_message_ringtone"));
-        bindPreferenceSummaryToValue(findPreference("sync_frequency"));
+        GeneralPreferenceFragment.bindPreferences(this, null);
+        DataSyncPreferenceFragment.bindPreferences(this, null);
     }
 
     /** {@inheritDoc} */
@@ -131,6 +131,9 @@ public class SettingsActivity extends PreferenceActivity {
      * example, 10" tablets are extra-large.
      */
     private static boolean isXLargeTablet(Context context) {
+        if (true) {
+            return ALWAYS_MULTIPANE_PREFS;
+        }
         return (context.getResources().getConfiguration().screenLayout
         & Configuration.SCREENLAYOUT_SIZE_MASK) >= Configuration.SCREENLAYOUT_SIZE_XLARGE;
     }
@@ -247,9 +250,12 @@ public class SettingsActivity extends PreferenceActivity {
             // to their values. When their values change, their summaries are
             // updated to reflect the new value, per the Android Design
             // guidelines.
-            bindPreferenceSummaryToValue(findPreference(getString(R.string.pref_key_auto_start)));
-            bindPreferenceSummaryToValue(findPreference(getString(R.string.pref_key_in_background)));
+            bindPreferences(null, this);
         }
+
+        protected static void bindPreferences(PreferenceActivity _preferenceActivity,
+                PreferenceFragment _preferenceFragment) {}
+
     }
 
     /**
@@ -268,7 +274,26 @@ public class SettingsActivity extends PreferenceActivity {
             // to their values. When their values change, their summaries are
             // updated to reflect the new value, per the Android Design
             // guidelines.
-            bindPreferenceSummaryToValue(findPreference(getString(R.string.pref_key_rssi_running_average)));
+            bindPreferences(null, this);
+        }
+
+        protected static void bindPreferences(PreferenceActivity _preferenceActivity,
+                PreferenceFragment _preferenceFragment) {
+            bindPreference(_preferenceActivity, _preferenceFragment,
+                    R.string.pref_key_rssi_running_average);
+        }
+
+    }
+
+    public static void bindPreference(PreferenceActivity _preferenceActivity,
+            PreferenceFragment _preferenceFragment, int _prefKey) {
+        if (_preferenceFragment != null) {
+            bindPreferenceSummaryToValue(_preferenceFragment.findPreference(
+                    _preferenceFragment.getString(_prefKey)));
+        } else {
+            bindPreferenceSummaryToValue(_preferenceActivity.findPreference(
+                    _preferenceActivity.getString(_prefKey)));
         }
     }
+
 }

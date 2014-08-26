@@ -3,10 +3,10 @@
     <!-- These settings headers are only used on tablets. -->
 
     <header
-        android:fragment="uk.co.alt236.btlescan.SettingsActivity$GeneralPreferenceFragment"
+        android:fragment="uk.co.alt236.btlescan.activities.SettingsActivity$GeneralPreferenceFragment"
         android:title="@string/pref_header_general" />
     <header
-        android:fragment="uk.co.alt236.btlescan.SettingsActivity$DataSyncPreferenceFragment"
+        android:fragment="uk.co.alt236.btlescan.activities.SettingsActivity$DataSyncPreferenceFragment"
         android:title="@string/pref_header_data_analysis" />
 
 </preference-headers>
