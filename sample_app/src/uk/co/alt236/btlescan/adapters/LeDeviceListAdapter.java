@@ -124,7 +124,10 @@ public class LeDeviceListAdapter extends SimpleCursorAdapter {
                 android.text.format.DateFormat.format(
                         Constants.TIME_FORMAT, new java.util.Date(device.getTimestamp())));
         viewHolder.deviceAddress.setText(device.getAddress());
-        viewHolder.deviceRssi.setText(rssiString + " / " + runningAverageRssiString);
+        viewHolder.deviceRssi.setText(String.format(
+                mActivity.getString(R.string.formatter_rssi_line),
+                rssiString,
+                runningAverageRssiString));
 
         int max = BluetoothLeDevice.MAX_RSSI - BluetoothLeDevice.MIN_RSSI;
         viewHolder.deviceRssiBar.setMax(max);

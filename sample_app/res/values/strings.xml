@@ -20,7 +20,8 @@
     <string name="formatter_meters">%sm</string>
     <string name="formatter_db">%sdb</string>
     <string name="formatter_item_count">Items: %s</string>
-
+    <string name="formatter_rssi_line">%1$s (avg. %2$s)</string>
+    
     <!-- Menu items -->
     <string name="menu_settings">Settings</string>
     <string name="menu_about">About</string>
@@ -32,7 +33,7 @@
 
     <!-- Export Email Strings -->
     <string name="exporter_email_device_list_subject">Bluetooth LE Scan Results (%s)</string>
-    <string name="exporter_email_device_services_subject" formatted="false">Bluetooth LE Device GATT Results (%s, %s)</string>
+    <string name="exporter_email_device_services_subject">Bluetooth LE Device GATT Results (%1$s, %1$s)</string>
     <string name="exporter_email_device_list_body">Please find attached the scan results.</string>
     <string name="exporter_email_device_list_picker_text">Please select your email client:</string>
 
