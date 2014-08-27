@@ -1,5 +1,7 @@
 package uk.co.alt236.btlescan.activities;
 
+import java.util.Map;
+
 import uk.co.alt236.bluetoothlelib.device.BluetoothLeDevice;
 import uk.co.alt236.bluetoothlelib.device.GimbalDevice;
 import uk.co.alt236.btlescan.R;
@@ -19,6 +21,7 @@ import android.preference.PreferenceManager;
 import android.text.SpannableString;
 import android.text.method.LinkMovementMethod;
 import android.text.util.Linkify;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -214,6 +217,11 @@ public class MainActivity extends ListActivity {
 
         invalidateOptionsMenu();
 
+        Map<String, ?> preferences = mPrefs.getAll();
+        Log.d("", preferences.toString());
+
+        BluetoothLeDevice.setInvalidationThreshold(
+                mPrefs.getInt(getString(R.string.pref_key_rssi_running_average), 10) * 1000);
         if (mPrefs.getBoolean(getString(R.string.pref_key_auto_start), false)) {
             startScan();
         }

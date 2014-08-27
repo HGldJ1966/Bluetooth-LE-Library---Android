@@ -1,6 +1,6 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
 
-    <ListPreference
+    <uk.co.alt236.btlescan.preference.IntListPreference
         android:defaultValue="10"
         android:entries="@array/pref_titles_rssi_running_average"
         android:entryValues="@array/pref_values_rssi_running_average"

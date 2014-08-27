@@ -35,7 +35,6 @@ public class BluetoothLeDevice implements Parcelable {
     private static final String PARCEL_EXTRA_FIRST_RSSI = "device_first_rssi";
     private static final String PARCEL_EXTRA_FIRST_TIMESTAMP = "first_timestamp";
 
-    private static final long INVALIDATION_THRESHOLD = 10 * 1000;
     protected static final int MAX_RSSI_LOG_SIZE = 10;
 
     public static final int MAX_RSSI = -50;
@@ -52,6 +51,8 @@ public class BluetoothLeDevice implements Parcelable {
     protected int mCurrentRssi;
     protected long mCurrentTimestamp;
 
+    protected static long sInvalidationThreshold = 10 * 1000;
+
     /** The Constant CREATOR. */
     public static final Parcelable.Creator<BluetoothLeDevice> CREATOR = new Parcelable.Creator<BluetoothLeDevice>() {
 
@@ -65,6 +66,10 @@ public class BluetoothLeDevice implements Parcelable {
             return new BluetoothLeDevice[size];
         }
     };
+
+    public static void setInvalidationThreshold(long _invalidationThreshold) {
+        sInvalidationThreshold = _invalidationThreshold;
+    }
 
     /**
      * Instantiates a new Bluetooth LE device.
@@ -138,7 +143,7 @@ public class BluetoothLeDevice implements Parcelable {
         synchronized (mRssiLog) {
             Set<Long> keySet = mRssiLog.keySet();
             for (long key : keySet.toArray(new Long[keySet.size()])) {
-                if (key < System.currentTimeMillis() - INVALIDATION_THRESHOLD) {
+                if (key < System.currentTimeMillis() - sInvalidationThreshold) {
                     mRssiLog.remove(key);
                 }
             }
@@ -329,7 +334,7 @@ public class BluetoothLeDevice implements Parcelable {
             while (it1.hasNext()) {
                 lastKey = it1.next();
                 lastValue = mRssiLog.get(lastKey);
-                if (lastKey >= System.currentTimeMillis() - INVALIDATION_THRESHOLD) {
+                if (lastKey >= System.currentTimeMillis() - sInvalidationThreshold) {
                     count++;
                     sum += lastValue;
                 }
@@ -341,8 +346,8 @@ public class BluetoothLeDevice implements Parcelable {
         } else if (count == 1) {
             // Fade out the last signal
             return (lastValue - GONE_RSSI)
-                    * ((double) (INVALIDATION_THRESHOLD - (System.currentTimeMillis() - lastKey))
-                    / (double) INVALIDATION_THRESHOLD) + GONE_RSSI;
+                    * ((double) (sInvalidationThreshold - (System.currentTimeMillis() - lastKey))
+                    / (double) sInvalidationThreshold) + GONE_RSSI;
         } else {
             return GONE_RSSI;
         }

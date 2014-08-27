@@ -3,8 +3,10 @@ package uk.co.alt236.btlescan.activities;
 import java.util.List;
 
 import uk.co.alt236.btlescan.R;
+import uk.co.alt236.btlescan.preference.IntListPreference;
 import android.annotation.TargetApi;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.media.Ringtone;
 import android.media.RingtoneManager;
@@ -228,10 +230,21 @@ public class SettingsActivity extends PreferenceActivity {
 
         // Trigger the listener immediately with the preference's
         // current value.
-        sBindPreferenceSummaryToValueListener.onPreferenceChange(preference,
-                PreferenceManager
-                        .getDefaultSharedPreferences(preference.getContext())
-                        .getString(preference.getKey(), ""));
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(preference
+                .getContext());
+        String strValue;
+        String key = preference.getKey();
+        if (preference instanceof IntListPreference) {
+            if (prefs.contains(key)) {
+                strValue = String.valueOf(prefs.getInt(key, 0));
+            } else {
+                strValue = "";
+            }
+        } else {
+            strValue = prefs.getString(key, "");
+        }
+        sBindPreferenceSummaryToValueListener.onPreferenceChange(
+                preference, strValue);
     }
 
     /**
