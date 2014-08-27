@@ -7,7 +7,6 @@ import uk.co.alt236.btlescan.adapters.LeDeviceListAdapter;
 import uk.co.alt236.btlescan.containers.BluetoothLeDeviceStore;
 import uk.co.alt236.btlescan.util.BluetoothLeScanner;
 import uk.co.alt236.easycursor.objectcursor.EasyObjectCursor;
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.bluetooth.BluetoothAdapter;
@@ -16,6 +15,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.text.SpannableString;
 import android.text.method.LinkMovementMethod;
 import android.text.util.Linkify;
@@ -32,8 +32,6 @@ public class MainActivity extends ListActivity {
     protected static final boolean GIMBAL_MODE = true;
 
     protected static final boolean GIMBAL_ONLY_MODE = false;
-
-    private static final boolean STOP_SCAN_ON_PAUSE = false;
 
     @InjectView(R.id.tvBluetoothLe)
     TextView mTvBluetoothLeStatus;
@@ -75,6 +73,8 @@ public class MainActivity extends ListActivity {
             });
         }
     };
+
+    private SharedPreferences mPrefs;
 
     private void updateItemCount(int count) {
         mTvItemCount.setText(
@@ -123,10 +123,7 @@ public class MainActivity extends ListActivity {
         mLeDeviceListAdapter = new LeDeviceListAdapter(this, mDeviceStore.getDeviceCursor());
         setListAdapter(mLeDeviceListAdapter);
 
-        SharedPreferences prefs = getPreferences(Activity.MODE_PRIVATE);
-        if (prefs.getBoolean(getString(R.string.pref_key_auto_start), false)) {
-            startScan();
-        }
+        mPrefs = PreferenceManager.getDefaultSharedPreferences(this);
     }
 
     @Override
@@ -192,7 +189,7 @@ public class MainActivity extends ListActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        if (STOP_SCAN_ON_PAUSE) {
+        if (!mPrefs.getBoolean(getString(R.string.pref_key_in_background), false)) {
             stopScan();
         }
     }
@@ -209,7 +206,6 @@ public class MainActivity extends ListActivity {
         } else {
             mTvBluetoothStatus.setText(R.string.off);
         }
-
         if (mIsBluetoothLePresent) {
             mTvBluetoothLeStatus.setText(R.string.supported);
         } else {
@@ -217,6 +213,10 @@ public class MainActivity extends ListActivity {
         }
 
         invalidateOptionsMenu();
+
+        if (mPrefs.getBoolean(getString(R.string.pref_key_auto_start), false)) {
+            startScan();
+        }
     }
 
     private void clearScan() {
