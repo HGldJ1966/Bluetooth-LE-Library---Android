@@ -267,7 +267,10 @@ public class SettingsActivity extends PreferenceActivity {
         }
 
         protected static void bindPreferences(PreferenceActivity _preferenceActivity,
-                PreferenceFragment _preferenceFragment) {}
+                PreferenceFragment _preferenceFragment) {
+            bindPreference(_preferenceActivity, _preferenceFragment,
+                    R.string.pref_key_ble_devices);
+        }
 
     }
 

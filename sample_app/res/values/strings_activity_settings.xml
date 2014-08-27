@@ -13,11 +13,23 @@
     <string name="pref_title_in_background">Scan in background</string>
     <string name="pref_description_in_background">Continue scanning in background, even if the application is closed</string>
 
+    <string name="pref_key_ble_devices">ble_devices</string>
+    <string name="pref_title_ble_devices">BLE device filter</string>
+    <string-array name="pref_titles_ble_devices">
+        <item>Show all devices</item>
+        <item>Only show iBeacons</item>
+        <item>Only show Gimbals</item>
+    </string-array>
+    <string-array name="pref_values_ble_devices">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+    </string-array>
+    
     <string name="pref_header_data_analysis">Data analysis</string>
     
     <string name="pref_key_rssi_running_average">rssi_running_average</string>
     <string name="pref_title_rssi_running_average">RSSI running average</string>
-
     <string-array name="pref_titles_rssi_running_average">
         <item>1 second</item>
         <item>2 seconds</item>

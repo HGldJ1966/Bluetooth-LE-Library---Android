@@ -1,9 +1,8 @@
 package uk.co.alt236.btlescan.activities;
 
-import java.util.Map;
-
 import uk.co.alt236.bluetoothlelib.device.BluetoothLeDevice;
 import uk.co.alt236.bluetoothlelib.device.GimbalDevice;
+import uk.co.alt236.bluetoothlelib.util.IBeaconUtils;
 import uk.co.alt236.btlescan.R;
 import uk.co.alt236.btlescan.adapters.LeDeviceListAdapter;
 import uk.co.alt236.btlescan.containers.BluetoothLeDeviceStore;
@@ -21,7 +20,6 @@ import android.preference.PreferenceManager;
 import android.text.SpannableString;
 import android.text.method.LinkMovementMethod;
 import android.text.util.Linkify;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -31,10 +29,6 @@ import butterknife.ButterKnife;
 import butterknife.InjectView;
 
 public class MainActivity extends ListActivity {
-
-    protected static final boolean GIMBAL_MODE = true;
-
-    protected static final boolean GIMBAL_ONLY_MODE = false;
 
     @InjectView(R.id.tvBluetoothLe)
     TextView mTvBluetoothLeStatus;
@@ -52,16 +46,14 @@ public class MainActivity extends ListActivity {
         @Override
         public void onLeScan(final BluetoothDevice device, int rssi, byte[] scanRecord) {
             final BluetoothLeDevice deviceLe;
-            if (GIMBAL_MODE) {
-                deviceLe = GimbalDevice.createFromBytes(device, rssi, scanRecord,
-                        System.currentTimeMillis());
-                if (GIMBAL_ONLY_MODE && !(deviceLe instanceof GimbalDevice)) {
-                    // Not a Gimbal; skip it
-                    return;
-                }
-            } else {
-                deviceLe = new BluetoothLeDevice(device, rssi, scanRecord,
-                        System.currentTimeMillis());
+            deviceLe = GimbalDevice.createFromBytes(device, rssi, scanRecord,
+                    System.currentTimeMillis());
+            if (mShowOnlyGimbals && !(deviceLe instanceof GimbalDevice)) {
+                // Not a Gimbal; skip it
+                return;
+            } else if (mShowOnlyIbeacons && !IBeaconUtils.isThisAnIBeacon(deviceLe)) {
+                // Not an iBeacon; skip it
+                return;
             }
             mDeviceStore.addDevice(deviceLe);
             final EasyObjectCursor<BluetoothLeDevice> c = mDeviceStore.getDeviceCursor();
@@ -78,6 +70,9 @@ public class MainActivity extends ListActivity {
     };
 
     private SharedPreferences mPrefs;
+
+    private boolean mShowOnlyIbeacons;
+    private boolean mShowOnlyGimbals;
 
     private void updateItemCount(int count) {
         mTvItemCount.setText(
@@ -217,8 +212,23 @@ public class MainActivity extends ListActivity {
 
         invalidateOptionsMenu();
 
-        Map<String, ?> preferences = mPrefs.getAll();
-        Log.d("", preferences.toString());
+        switch (mPrefs.getInt(getString(R.string.pref_key_ble_devices), 0)) {
+        case 0:
+            // Show all devices
+            mShowOnlyIbeacons = false;
+            mShowOnlyGimbals = false;
+            break;
+        case 1:
+            // Only iBeacons
+            mShowOnlyIbeacons = true;
+            mShowOnlyGimbals = false;
+            break;
+        case 2:
+            // Only Gimbals
+            mShowOnlyIbeacons = false;
+            mShowOnlyGimbals = true;
+            break;
+        }
 
         BluetoothLeDevice.setInvalidationThreshold(
                 mPrefs.getInt(getString(R.string.pref_key_rssi_running_average), 10) * 1000);
